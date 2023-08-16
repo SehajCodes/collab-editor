@@ -63,8 +63,3 @@ This command will start the container and automatically launch the Flask server.
 - Click on edit button to open it for editing.
 - Changes made by one user will be instantly reflected for all other users viewing the same file.
 - Click on save button to commit the changes to the file in `files` folder. 
-
-## Technologies Used
-
-- 
-
