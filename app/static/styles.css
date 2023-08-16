@@ -1,0 +1,21 @@
+body {
+  background-color: black;
+  font-family: Helvetica;
+  color: white;
+}
+
+button {
+  /* background-color: rgb(47, 47, 47); */
+  /* color: white; */
+  font-weight: bold;
+  font-size: 14px;
+  /* border-radius: 3px; */
+}
+
+select {
+  /* background-color: rgb(47, 47, 47);
+  color: white; */
+  font-size: 14px;
+  font-weight: bold;
+  border-style: none;
+}

@@ -1,0 +1,118 @@
+{% extends "index.html" %}
+{% block head %}
+<link rel="stylesheet" href="static/codemirror-5.65.14/lib/codemirror.css"></link>
+<link rel="stylesheet" href="static/codemirror-5.65.14/theme/material-darker.css"></link>
+
+<script type="text/javascript" src="static/codemirror-5.65.14/lib/codemirror.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+<!-- <script src="static/codemirror-5.65.14/mode/htmlmixed/htmlmixed.js"></script>
+<script src="static/codemirror-5.65.14/mode/xml/xml.js"></script> -->
+{% endblock %}
+{% block title %}Collab Editor{% endblock %}
+
+{% block body %}
+<!-- <h1>{{ filename }}</h1> -->
+<form action="/" method="get">
+  <!-- <label for="filename">Choose file:</label> -->
+  <select id="filename" name="filename">
+    <option value="" selected disabled hidden>Select a file</option>
+    {% for file in files %}
+      {% if file == filename %}
+      <option value="{{ filename }}" selected>{{ filename }}</option>
+      {% else %}
+      <option value="{{ file }}">{{ file }}</option>
+      {% endif %}
+    {% endfor %}
+  </select>
+  <button type="submit">Edit</button>
+</form>
+<style>
+  .CodeMirror {border-top: 1px solid black; border-bottom: 1px solid black;}
+  .cm-trailingspace {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAACCAYAAAB/qH1jAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3QUXCToH00Y1UgAAACFJREFUCNdjPMDBUc/AwNDAAAFMTAwMDA0OP34wQgX/AQBYgwYEx4f9lQAAAABJRU5ErkJggg==);
+    background-position: bottom left;
+    background-repeat: repeat-x;
+  }
+</style>
+<div>
+<!-- <h1 id="current_filename">{{ filename }}</h1> -->
+<br>
+{% if filename is defined %}
+<form action="/save" method="post">
+  <input type = "hidden" id="cur_filename" name = "cur_filename" value = "{{ filename }}">
+  <textarea id="text" name="text">{{ text }}</textarea>
+  <textarea id="text0" name="text0" style="display: none;"></textarea>
+  <p id="result"></p>
+  <button type="submit">Save</button>
+  <script>
+    
+    const socket = io.connect('http://' + document.domain + ':' + location.port);
+    
+    var editor = CodeMirror.fromTextArea(document.getElementById("text"), {
+      lineNumbers: true,
+      theme: "material-darker"
+      // showTrailingSpace: true
+    });
+    
+    editor.on("keyup", (instance, changeObj) => {
+      cursor_pos = editor.getCursor();
+      lines = editor.lineCount();
+      const changeData = {filename: document.getElementById("cur_filename").value, text: editor.getValue(), cursor_pos: cursor_pos, lines:lines};
+      socket.emit("update_editor", changeData);
+    });
+
+    socket.on("update_editor", (data) => {
+      if (document.getElementById("cur_filename").value === data.filename) {
+        char_continuity_next = false;
+        char_continuity_prev = false;
+        cursor_pos = editor.getCursor();
+        sender_cursor_pos = data.cursor_pos;
+        sender_line = sender_cursor_pos["line"];
+        sender_ch = sender_cursor_pos["ch"];
+        line = cursor_pos["line"];
+        ch = cursor_pos["ch"];
+        // console.log(sender_line, line);
+        // console.log(data.lines, editor.lineCount())
+        if (data.lines > editor.lineCount()) {
+          sender_line = sender_line - 1;
+          if (sender_line == line) {
+            // console.log("uhh")
+            char_continuity_next = true;
+          };
+          if (sender_line <= line) {
+            line = line + 1;
+          };
+        } else if (data.lines < editor.lineCount()) {
+          sender_line = sender_line + 1;
+          console.log(sender_ch, ch)
+          if (sender_line == line) {
+            // console.log("uhh")
+            char_continuity_prev = true;
+          };
+          if (sender_line <= line) {
+            line = line - 1;
+          };
+        };
+        // console.log(sender_ch, ch)
+        editor.setValue(data.text)
+        // console.log(char_continuity_next)
+        if (char_continuity_next) {
+          if (ch > (editor.getLine(line-1).length)) {
+            ch = ch - editor.getLine(line-1).length
+          };
+        };
+        if (char_continuity_prev) {
+          // console.log(sender_ch, ch)
+          ch = sender_ch+ch
+        }
+        editor.setCursor({line: line, ch: ch})
+        // console.log(editor.getCursor())
+      };
+    });
+    </script>
+</form>
+{% endif %}
+<!-- <button onclick="cursor()">Update</button> -->
+</div>
+{% endblock %}

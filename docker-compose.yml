@@ -1,0 +1,9 @@
+services:
+  flask:
+    volumes:
+      - ./app:/app
+      - ./files:/files
+      - ./temp:/temp
+    build: ./
+    ports:
+      - 0.0.0.0:8000:5000
