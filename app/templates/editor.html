@@ -64,6 +64,7 @@
 
     socket.on("update_editor", (data) => {
       if (document.getElementById("cur_filename").value === data.filename) {
+        char_continuity = false;
         char_continuity_next = false;
         char_continuity_prev = false;
         cursor_pos = editor.getCursor();
@@ -72,6 +73,7 @@
         sender_ch = sender_cursor_pos["ch"];
         line = cursor_pos["line"];
         ch = cursor_pos["ch"];
+        current_line_length = editor.getLine(line).length;
         // console.log(sender_line, line);
         // console.log(data.lines, editor.lineCount())
         if (data.lines > editor.lineCount()) {
@@ -87,18 +89,21 @@
           sender_line = sender_line + 1;
           // console.log(sender_ch, ch)
           if (sender_line == line) {
-            // console.log("uhh")
+            console.log("uhh")
             char_continuity_prev = true;
           };
           if (sender_line <= line) {
             line = line - 1;
           };
-        };
+        } else {
+          if (sender_line == line && sender_ch<=ch) {
+            char_continuity = true;
+          }
+        }
         // console.log(sender_ch, ch)
         editor.setValue(data.text)
-        // console.log(char_continuity_next)
         if (char_continuity_next) {
-          console.log("next")
+          // console.log("next")
           if (ch > (editor.getLine(line-1).length)) {
             ch = ch - editor.getLine(line-1).length
           } else {
@@ -106,9 +111,16 @@
           };
         };
         if (char_continuity_prev) {
-          console.log("prev")
+          // console.log("prev")
+          ch = sender_ch - ch
+        }
+        if (char_continuity) {
+          // console.log(editor.getLine(line).length, current_line_length)
           // console.log(sender_ch, ch)
-          ch = sender_ch+ch
+          if (editor.getLine(line).length+1 > current_line_length) {
+            diff = editor.getLine(line).length - current_line_length
+            ch = ch + diff
+          }
         }
         editor.setCursor({line: line, ch: ch})
         // console.log(editor.getCursor())
